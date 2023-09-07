@@ -95,7 +95,7 @@ add_library(SharedCode INTERFACE)
 
 # C++20, please
 # Use cxx_std_23 for C++23 (as of CMake v 3.20)
-target_compile_features(SharedCode INTERFACE cxx_std_23)
+target_compile_features(SharedCode INTERFACE cxx_std_20)
 
 # Manually list all .h and .cpp files for the plugin
 target_sources("${PROJECT_NAME}" PRIVATE ${SourceFiles})
