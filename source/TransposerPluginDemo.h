@@ -139,7 +139,7 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override
     {
-        juce::MemoryOutputStream (destData, true).writeFloat (*transpose);
+        juce::MemoryOutputStream (destData, true).writeInt (*transpose);
     }
 
     void setStateInformation (const void* data, int sizeInBytes) override
