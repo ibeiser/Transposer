@@ -1,4 +1,4 @@
-#include <PluginProcessor.h>
+#include <TransposerPluginDemo.h>>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
@@ -13,7 +13,7 @@ PluginProcessor testPlugin;
 TEST_CASE("Plugin instance name", "[name]")
 {
   CHECK_THAT(testPlugin.getName().toStdString(),
-             Catch::Matchers::Equals("Pamplejuce Demo"));
+             Catch::Matchers::Equals("Transposer"));
 }
 
 #ifdef PAMPLEJUCE_IPP

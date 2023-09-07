@@ -10,25 +10,32 @@ include (PamplejuceVersion)
 # This is the internal name of the project and the name of JUCE's shared code "target"
 # Note: This cannot have spaces (it may be 2023, but you can't have it all!)
 # Worry not, JUCE's PRODUCT_NAME can have spaces (and is DAWs display)
-set(PROJECT_NAME "Pamplejuce")
+set(PROJECT_NAME "Transposer")
 
+if(CMAKE_GENERATOR STREQUAL Xcode)
+    set(CMAKE_SUPPRESS_REGENERATION true)
+endif()
+set(CMAKE_OSX_ARCHITECTURES arm64 x86_64)
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+set_property(GLOBAL PROPERTY USE_FOLDERS YES)
+option(JUCE_ENABLE_MODULE_SOURCE_GROUPS "Show all module sources in IDE projects" ON)
 # Worry not, JUCE's PRODUCT_NAME can have spaces (and is what DAWs will display)
 # You can also just have it be the same thing as PROJECT_NAME
 # You may want to append the major version on the end of this (and PROJECT_NAME) ala:
 #   set(PROJECT_NAME "MyPlugin_v${MAJOR_VERSION}")
 # Doing so enables major versions to show up in IDEs and DAWs as separate plugins
 # allowing you to change parameters and behavior without breaking existing user projects
-set(PRODUCT_NAME "Pamplejuce Demo")
+set(PRODUCT_NAME "Transposer")
 
 # Change me! Used for the MacOS bundle name and Installers
-set(COMPANY_NAME "Pamplejuce Company")
+set(COMPANY_NAME "Beiser")
 
 # Change me! Used for the MacOS bundle identifier (and signing)
-set(BUNDLE_ID "com.pamplejuce.pamplejuce")
+set(BUNDLE_ID "com.Beiser.Transposer")
 
 # Change me! Set the plugin formats you want built
 # Valid choices: AAX Unity VST VST3 AU AUv3 Standalone
-set(FORMATS Standalone AU VST3 AUv3)
+set(FORMATS Standalone AU VST3)
 
 # For simplicity, the name of the CMake project is also the name of the target
 project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})
@@ -66,14 +73,16 @@ juce_add_plugin("${PROJECT_NAME}"
     # Change me!
     # A four-character plugin id
     # First character MUST be uppercase for AU formats
-    PLUGIN_MANUFACTURER_CODE Pamp
+    PLUGIN_MANUFACTURER_CODE Manu
 
     # Change me!
     # A unique four-character plugin id
     # Note: this must have at least one upper-case character
-    PLUGIN_CODE P001
+    PLUGIN_CODE P9kc
     FORMATS "${FORMATS}"
-
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT TRUE
+    IS_MIDI_EFFECT TRUE
     # The name of your final executable
     # This is how it's listed in the DAW
     # This can be different from PROJECT_NAME and can have spaces!
@@ -86,9 +95,10 @@ add_library(SharedCode INTERFACE)
 
 # C++20, please
 # Use cxx_std_23 for C++23 (as of CMake v 3.20)
-target_compile_features(SharedCode INTERFACE cxx_std_20)
+target_compile_features(SharedCode INTERFACE cxx_std_23)
 
 # Manually list all .h and .cpp files for the plugin
+target_sources("${PROJECT_NAME}" PRIVATE ${SourceFiles})
 # If you are like me, you'll use globs for your sanity.
 # Just ensure you employ CONFIGURE_DEPENDS so the build system picks up changes
 # If you want to appease the CMake gods and avoid globs, manually add files like so:
@@ -119,7 +129,7 @@ target_compile_definitions(SharedCode
     VERSION="${CURRENT_VERSION}"
 
     # JucePlugin_Name is for some reason doesn't use the nicer PRODUCT_NAME
-    PRODUCT_NAME_WITHOUT_VERSION="Pamplejuce"
+    PRODUCT_NAME_WITHOUT_VERSION="Transposer"
 )
 
 # Link to any other modules you added (with juce_add_module) here!
@@ -132,8 +142,16 @@ target_link_libraries(SharedCode
     Assets
     melatonin_inspector
     juce_audio_utils
+    juce_audio_formats
+    juce_audio_basics
+    juce_audio_devices
+    juce_audio_plugin_client
     juce_audio_processors
     juce_dsp
+    juce_core
+    juce_data_structures
+    juce_events
+    juce_graphics
     juce_gui_basics
     juce_gui_extra
     juce::juce_recommended_config_flags
