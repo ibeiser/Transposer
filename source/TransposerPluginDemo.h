@@ -52,108 +52,104 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 //==============================================================================
-class Transposer  : public juce::AudioProcessor
-{
-public:
+class Transposer : public juce::AudioProcessor
 
+                   public :
     //==============================================================================
     Transposer()
-        : AudioProcessor (BusesProperties()) // add no audio buses at all
+    : AudioProcessor(BusesProperties()) // add no audio buses at all
+{
+    addParameter(transpose = new juce::AudioParameterInt({"transpose", 0}, "Transpose", -12, 12, 0));
+}
+
+//==============================================================================
+void
+prepareToPlay(double sampleRate, int samplesPerBlock) override
+{
+    juce::ignoreUnused(samplesPerBlock);
+    juce::ignoreUnused(sampleRate);
+    notes.clear();
+    currentNote = 0;
+    lastNoteValue = -1;
+}
+
+void releaseResources() override {}
+
+void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override
+{
+    // A pure MIDI plugin shouldn't be provided any audio data
+    jassert(buffer.getNumChannels() == 0);
+    int transpose_value = *transpose;
+
+    buffer.clear();
+    juce::MidiBuffer processedMidi;
+
+    for (const auto metadata : midiMessages)
     {
-        addParameter (transpose = new juce::AudioParameterInt ({ "transpose", 0 }, "Transpose", -12, 12, 0));
-    }
+        auto message = metadata.getMessage();
+        const auto time = metadata.samplePosition;
 
-    //==============================================================================
-    void prepareToPlay (double sampleRate, int samplesPerBlock) override
-    {
-        juce::ignoreUnused (samplesPerBlock);
-        juce::ignoreUnused (sampleRate);
-        notes.clear();
-        currentNote = 0;
-        lastNoteValue = -1;
-    }
-
-    void releaseResources() override {}
-
-    void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override
-    {
-        // A pure MIDI plugin shouldn't be provided any audio data
-        jassert (buffer.getNumChannels() == 0);
-        int transpose_value = *transpose;
-        
-        
-        buffer.clear();
-        juce::MidiBuffer processedMidi;
-
-        for (const auto metadata : midiMessages)
+        if (message.isNoteOn())
         {
-            auto message = metadata.getMessage();
-            const auto time = metadata.samplePosition;
-
-            if (message.isNoteOn())
-            {
-                const juce::uint8 noteOnVel = message.getVelocity();
-                message = juce::MidiMessage::noteOn (message.getChannel(),
-                                                     message.getNoteNumber() + transpose_value,
-                                                     (juce::uint8) noteOnVel);
-            }
-            else if (message.isNoteOff())
-            {
-                const juce::uint8 noteOffVel = message.getVelocity();
-                message = juce::MidiMessage::noteOff (message.getChannel(),
-                                                     message.getNoteNumber() + transpose_value,
-                                                     (juce::uint8) noteOffVel);
-            }
-            
-            processedMidi.addEvent (message, time);
+            const juce::uint8 noteOnVel = message.getVelocity();
+            message = juce::MidiMessage::noteOn(message.getChannel(),
+                                                message.getNoteNumber() + transpose_value,
+                                                (juce::uint8)noteOnVel);
+        }
+        else if (message.isNoteOff())
+        {
+            const juce::uint8 noteOffVel = message.getVelocity();
+            message = juce::MidiMessage::noteOff(message.getChannel(),
+                                                 message.getNoteNumber() + transpose_value,
+                                                 (juce::uint8)noteOffVel);
         }
 
-        midiMessages.swapWith (processedMidi);
-        
-
+        processedMidi.addEvent(message, time);
     }
 
-    using AudioProcessor::processBlock;
+    midiMessages.swapWith(processedMidi);
+}
 
-    //==============================================================================
-    bool isMidiEffect() const override                     { return true; }
+using AudioProcessor::processBlock;
 
-    //==============================================================================
-    juce::AudioProcessorEditor* createEditor() override          { return new juce::GenericAudioProcessorEditor (*this); }
-    bool hasEditor() const override                        { return true; }
+//==============================================================================
+bool isMidiEffect() const override { return true; }
 
-    //==============================================================================
-    const juce::String getName() const override                  { return "Transposer"; }
+//==============================================================================
+juce::AudioProcessorEditor *createEditor() override { return new juce::GenericAudioProcessorEditor(*this); }
+bool hasEditor() const override { return true; }
 
-    bool acceptsMidi() const override                      { return true; }
-    bool producesMidi() const override                     { return true; }
-    double getTailLengthSeconds() const override           { return 0; }
+//==============================================================================
+const juce::String getName() const override { return "Transposer"; }
 
-    //==============================================================================
-    int getNumPrograms() override                          { return 1; }
-    int getCurrentProgram() override                       { return 0; }
-    void setCurrentProgram (int) override                  {}
-    const juce::String getProgramName (int) override             { return "None"; }
-    void changeProgramName (int, const juce::String&) override   {}
+bool acceptsMidi() const override { return true; }
+bool producesMidi() const override { return true; }
+double getTailLengthSeconds() const override { return 0; }
 
-    //==============================================================================
-    void getStateInformation (juce::MemoryBlock& destData) override
-    {
-        juce::MemoryOutputStream (destData, true).writeInt (*transpose);
-    }
+//==============================================================================
+int getNumPrograms() override { return 1; }
+int getCurrentProgram() override { return 0; }
+void setCurrentProgram(int) override {}
+const juce::String getProgramName(int) override { return "None"; }
+void changeProgramName(int, const juce::String &) override {}
 
-    void setStateInformation (const void* data, int sizeInBytes) override
-    {
-        transpose->setValueNotifyingHost (juce::MemoryInputStream (data, static_cast<size_t> (sizeInBytes), false).readInt());
-    }
+//==============================================================================
+void getStateInformation(juce::MemoryBlock &destData) override
+{
+    juce::MemoryOutputStream(destData, true).writeInt(*transpose);
+}
+
+void setStateInformation(const void *data, int sizeInBytes) override
+{
+    *transpose = juce::MemoryInputStream(data, static_cast<size_t>(sizeInBytes), false).readInt();
+}
 
 private:
-    //==============================================================================
-    juce::AudioParameterInt* transpose;
-    int currentNote, lastNoteValue;
-    
-    juce::SortedSet<int> notes;
-
-    //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Transposer)
-};
+//==============================================================================
+juce::AudioParameterInt *transpose;
+int currentNote, lastNoteValue;
+juce::SortedSet<int> notes;
+//==============================================================================
+JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Transposer)
+}
+;

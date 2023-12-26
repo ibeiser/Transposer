@@ -1,5 +1,8 @@
 # 3.24.1 is bundled in Visual Studio 2022 v17.4
 # 3.24.1 is also bundled in CLion as of 2023
+if(NOT APPLE)
+    message(FATAL_ERROR "This project is intended to be built only on macOS.")
+endif()
 cmake_minimum_required(VERSION 3.24.1)
 
 # This tells cmake we have goodies in the /cmake folder
@@ -35,7 +38,7 @@ set(BUNDLE_ID "com.Beiser.Transposer")
 
 # Change me! Set the plugin formats you want built
 # Valid choices: AAX Unity VST VST3 AU AUv3 Standalone
-set(FORMATS Standalone AU VST3)
+set(FORMATS AU VST3)
 
 # For simplicity, the name of the CMake project is also the name of the target
 project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})
