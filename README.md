@@ -13,7 +13,7 @@ to support transpose of MIDI notes.
 
 ## Installation
 copy Binary plugin from "Actions" tab
-
+(no official Apple developer license)
 or build:
 
 git clone and build with XCode for AU
